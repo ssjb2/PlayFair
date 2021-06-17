@@ -223,15 +223,13 @@ def evolutionStep(evaluatedPops, populationSize, step):
     if random.uniform(0, 1) > 0.1:
         for x in better:
             childs = childs + \
-                [offspringKey(better)] + inherit(better,
-                                                 better) + inherit2(better,
-                                                                    better) + [swapLettersFullAlfabet(better, 0)]  # changecolumns(better)
+                [offspringKey(better)] + inherit2(better, better) + \
+                [swapLettersFullAlfabet(better, 0)]  # changecolumns(better)
         # inherit better and worse
     else:
         for i in range(0, len(better)):
             childs = childs + \
-                [offspringKey(worse)] + inherit(better, worse) + inherit2(better,
-                                                                          worse) +\
+                [offspringKey(worse)] + inherit2(better, worse) + \
                 [swapLettersFullAlfabet(worse, 0)]
 
     childs = childs + inheritrow(better)
@@ -246,7 +244,7 @@ def evolutionStep(evaluatedPops, populationSize, step):
     # add childs and sort
     evaluatedPops = appendNewChild(evaluatedPops, childs)
     evaluatedPops = sortTable(evaluatedPops)
-    for i in range(5):
+    for i in range(10):
         evaluatedPops[i] = hillClimbing(evaluatedPops[i])
 
     numberOfLuckyLoosers = evaluatedPops[0][2]+1
@@ -469,7 +467,7 @@ def offspringKey(arr1):
 
 def swapLettersFullAlfabet(arr1, number):
     if number == 0:
-        number = random.randint(4, 10)
+        number = random.randrange(4, 10, 2)
     key = copyRandomKey(arr1)
     key = key[1].reshape(1, len(alfabet))
     keyString = ''.join(key[0][0:len(alfabet)])
@@ -479,8 +477,6 @@ def swapLettersFullAlfabet(arr1, number):
     return encodeKeyToMatrix(keyString)
 
 
-# ngs = Ngram_score('polish_trigrams.txt')
-ngs = Ngram_score('polish_trigrams2.txt')  # with 8
 ngs = Ngram_score('new_polish_quadgrams.txt')  # with |
 alfabet = "AĄBCĆDEĘFGHIJKLŁMNŃOÓPQRSŚTUVWXYZŹŻ|"
 tj = "Zaprawdę powiadam wam, oto nadchodzi wiek miecza i topora, wiek wilczej zamieci. Nadchodzi Czas Białego Zimna i Białego Światła, Czas Szaleństwa i Czas Pogardy, Tedd Deireadh, Czas Końca. Świat umrze wśród mrozu, a odrodzi się wraz z nowym słońcem. Odrodzi się ze Starszej Krwi, z Hen Ichaer, z zasianego ziarna. Ziarna, które nie wykiełkuje, lecz wybuchnie płomieniem. Ess'tuath esse! Tak będzie! Wypatrujcie znaków! Jakie to będą znaki, rzeknę wam - wprzód spłynie ziemia krwią Aen Seidhe, Krwią Elfów... Aen Ithlinnespeath, przepowiednia Ithlinne Aegli aep Aevenien Rozdział pierwszy Miasto płonęło. Wąskie uliczki, wiodące ku fosie, ku pierwszemu tarasowi, ziały dymem i żarem, płomienie pożerały ciasno skupione strzechy domostw, lizały mury zamku. Od zachodu, od strony bramy portowej, narastał wrzask, odgłosy zajadłej walki, głuche, wstrząsające murem uderzenia taranu. Napastnicy ogarnęli ich niespodziewanie, przełamawszy barykadę bronioną przez nielicznych żołnierzy, mieszczan z halabardami i kuszników z cechu. Okryte czarnymi kropierzami konie przeleciały nad zaporą jak upiory, jasne, rozmigotane brzeszczoty siały śmierć wśród uciekających obrońców. Ciri poczuła, jak wiozący ją na łęku rycerz spina gwałtownie konia. Usłyszała jego krzyk. Trzymaj się, krzyczał. Trzymaj się! Inni rycerze w barwach Cintry wyprzedzili ich, w pędzie ścięli się z Nilfgaardczykami. Ciri widziała to przez moment, kątem oka - szaleńczy wir błękitno - złotych i czarnych płaszczy wśród szczęku stali, łomotu kling o tarcze, rżenia koni... Krzyk. Nie, nie krzyk. Wrzask. Trzymaj się! Strach. Każdy wstrząs, każde szarpnięcie, każdy skok konia rwie do bólu dłonie zaciśnięte na rzemieniu. Nogi w bolesnym przykurczu nie znajdują oparcia, oczy łzawią od dymu. Obejmujące ją ramię dusi, dławi, boleśnie zgniata żebra. Dookoła narasta krzyk, taki, jakiego nie słyszała nigdy dotąd. Co trzeba zrobić człowiekowi, by tak krzyczał? Strach. Obezwładniający, paraliżujący, duszący strach. Znowu szczęk żelaza, chrap koni. Domy dookoła tańczą, buchające ogniem okna są nagle tam, gdzie przed chwilą była błotnista uliczka, zasłana trupami, zawalona porzuconym dobytkiem uciekinierów. Rycerz za jej plecami zanosi się nagle dziwnym, chrapliwym kaszlem. Na wczepione w rzemień ręce bucha krew. Wrzask. Świst strzał. Upadek, wstrząs, bolesne uderzenie o zbroję. Obok łomocą kopyta, nad głową miga koński brzuch i wystrzępiony popręg, drugi koński brzuch, rozwiany czarny kropierz. Stęknięcia, takie, jakie wydaje drwal rąbiący drzewo. Ale to nie drzewo, to żelazo o żelazo. Krzyk, zdławiony i głuchy, tuż przy niej coś wielkiego i czarnego wali się z pluskiem w błoto, bryzga krwią."
@@ -490,21 +486,17 @@ tj = ''.join(e for e in tj if e.isalnum()).upper()
 matrixSize = 6
 
 # english
-alfabet = "ABCDEFGHIKLMNOPQRSTUVWXYZ"
-tj = 'NOAMOUNTOFEVIDENCEWILLEVERPERSUADEANIDIOTWHENIWASSEVENTEENMYFATHERWASSOSTUPIDIDIDNTWANTTOBESEENWITHHIMINPUBLICWHENIWASTWENTYFOURIWASAMAZEDATHOWMUCHTHEOLDMANHADLEARNEDINJUSTSEVENYEARSWHYWASTEYOURMONEYLOOKINGUPYOURFAMILYTREEJUSTGOINTOPOLITICSANDYOUROPPONENTWILLDOITFORYOUIWASEDUCATEDONCEITTOOKMEYEARSTOGETOVERITNEVERARGUEWITHSTUPIDPEOPLETHEYWILLDRAGYOUDOWNTOTHEIRLEVELANDTHENBEATYOUWITHEXPERIENCEIFYOUDONTREADTHENEWSPAPERYOUREUNINFORMEDIFYOUREADTHENEWSPAPERYOUREMISINFORMEDHOWEASYITISTOMAKEPEOPLEBELIEVEALIEANDHOWHARDITISTOUNDOTHATWORKAGAINGOODDECISIONSCOMEFROMEXPERIENCEEXPERIENCECOMESFROMMAKINGBADDECISIONSIFYOUWANTTOCHANGETHEFUTUREYOUMUSTCHANGEWHATYOUREDOINGINTHEPRESENTDONTWRESTLEWITHPIGSYOUBOTHGETDIRTYANDTHEPIGLIKESITWORRYINGISLIKEPAYINGADEBTYOUDONTOWETHEAVERAGEWOMANWOULDRATHERHAVEBEAUTYTHANBRAINSBECAUSETHEAVERAGEMANCANSEEBETTERTHANHECANTHINKTHEMOREILEARNABOUTPEOPLETHEMOREILIKEMYDOG'
-tj = 'He was led back along a passage, past more works of art, up a staircase, and then along a wide corridor with thick wood-paneled doors and chandeliers. Alex assumed that the main house was used for entertaining. Sayle himself must live here. But the computers would be constructed in the modern buildings he had seen opposite the airstrip. Presumably he would be taken there tomorrow. His room was at the far end. It was a large room with a four-poster bed and a window looking out onto the fountain. Darkness had fallen and the water, cascading ten feet into the air over a semi-naked statue that looked remarkably like Herod Sayle, was eerily illuminated by a dozen concealed lights. Next to the window was a table with an evening meal already laid out for him: ham, cheese, salad. His luggage was lying on the bed. He went over to his case—a Nike sports bag—and examined it. When he had closed it up, he had inserted three hairs into the zip, trapping them in the metal teeth. They were no longer there. Alex opened the case and went through it. Everything was exactly as it had been when he had packed, but he was certain that the sports bag had been expertly and methodically searched. He took out the Color Game Boy, inserted the Speed Wars cartridge, and pressed the start button. At once the screen lit up with a green rectangle, the same shape as the room. He lifted the Game Boy up and swung it around him, following the line of the walls. A red flashing dot suddenly appeared on the screen. He walked forward, holding the Game Boy in front of him. The dot flashed faster, more intensely. He had reached a picture, hanging next to the bathroom, a squiggle of colors that looked suspiciously like a Picasso. He put the Game Boy down, and being careful not to make a sound, lifted the canvas off the wall. The bug was taped behind it, a black disk about the size of a dime. Alex looked at it for a minute wondering why it was there. Security? Or was Sayle such a control freak that he had to know what his guests were doing, every minute of the day and night? Alex lifted the picture and gently lowered it back into place. There was only one bug in the room. The bathroom was clean. He ate his dinner, showered, and went to bed. As he passed the window, he noticed activity in the grounds near the fountains. There were lights coming out of the modern buildings. Three men, all dressed in white overalls, were driving toward the house in an open-top jeep. Two more men walked past. These were security guards, dressed in the same uniforms as the men at the gate. They were both carrying semiautomatic machine guns. Not just a private army but a well-armed one. He got into bed. The last person who had slept here had been his uncle, Ian Rider. Had he seen something, looking out of the window? Had he heard something? What could have happened that meant he had to die? Sleep took a long time coming to the dead man’s bed.'
-tj = ''.join(e for e in tj if e.isalnum()).upper().replace("J", "I")
-
-ngs = Ngram_score('english_bigrams.txt')
-ngs = Ngram_score('playfair_english_bigrams.txt')
-ngs = Ngram_score('playfair_english_trigrams.txt')
-ngs = Ngram_score('playfair_english_quadgrams.txt')
-matrixSize = 5
+# alfabet = "ABCDEFGHIKLMNOPQRSTUVWXYZ"
+# tj = 'NOAMOUNTOFEVIDENCEWILLEVERPERSUADEANIDIOTWHENIWASSEVENTEENMYFATHERWASSOSTUPIDIDIDNTWANTTOBESEENWITHHIMINPUBLICWHENIWASTWENTYFOURIWASAMAZEDATHOWMUCHTHEOLDMANHADLEARNEDINJUSTSEVENYEARSWHYWASTEYOURMONEYLOOKINGUPYOURFAMILYTREEJUSTGOINTOPOLITICSANDYOUROPPONENTWILLDOITFORYOUIWASEDUCATEDONCEITTOOKMEYEARSTOGETOVERITNEVERARGUEWITHSTUPIDPEOPLETHEYWILLDRAGYOUDOWNTOTHEIRLEVELANDTHENBEATYOUWITHEXPERIENCEIFYOUDONTREADTHENEWSPAPERYOUREUNINFORMEDIFYOUREADTHENEWSPAPERYOUREMISINFORMEDHOWEASYITISTOMAKEPEOPLEBELIEVEALIEANDHOWHARDITISTOUNDOTHATWORKAGAINGOODDECISIONSCOMEFROMEXPERIENCEEXPERIENCECOMESFROMMAKINGBADDECISIONSIFYOUWANTTOCHANGETHEFUTUREYOUMUSTCHANGEWHATYOUREDOINGINTHEPRESENTDONTWRESTLEWITHPIGSYOUBOTHGETDIRTYANDTHEPIGLIKESITWORRYINGISLIKEPAYINGADEBTYOUDONTOWETHEAVERAGEWOMANWOULDRATHERHAVEBEAUTYTHANBRAINSBECAUSETHEAVERAGEMANCANSEEBETTERTHANHECANTHINKTHEMOREILEARNABOUTPEOPLETHEMOREILIKEMYDOG'
+# tj = 'He was led back along a passage, past more works of art, up a staircase, and then along a wide corridor with thick wood-paneled doors and chandeliers. Alex assumed that the main house was used for entertaining. Sayle himself must live here. But the computers would be constructed in the modern buildings he had seen opposite the airstrip. Presumably he would be taken there tomorrow. His room was at the far end. It was a large room with a four-poster bed and a window looking out onto the fountain. Darkness had fallen and the water, cascading ten feet into the air over a semi-naked statue that looked remarkably like Herod Sayle, was eerily illuminated by a dozen concealed lights. Next to the window was a table with an evening meal already laid out for him: ham, cheese, salad. His luggage was lying on the bed. He went over to his case—a Nike sports bag—and examined it. When he had closed it up, he had inserted three hairs into the zip, trapping them in the metal teeth. They were no longer there. Alex opened the case and went through it. Everything was exactly as it had been when he had packed, but he was certain that the sports bag had been expertly and methodically searched. He took out the Color Game Boy, inserted the Speed Wars cartridge, and pressed the start button. At once the screen lit up with a green rectangle, the same shape as the room. He lifted the Game Boy up and swung it around him, following the line of the walls. A red flashing dot suddenly appeared on the screen. He walked forward, holding the Game Boy in front of him. The dot flashed faster, more intensely. He had reached a picture, hanging next to the bathroom, a squiggle of colors that looked suspiciously like a Picasso. He put the Game Boy down, and being careful not to make a sound, lifted the canvas off the wall. The bug was taped behind it, a black disk about the size of a dime. Alex looked at it for a minute wondering why it was there. Security? Or was Sayle such a control freak that he had to know what his guests were doing, every minute of the day and night? Alex lifted the picture and gently lowered it back into place. There was only one bug in the room. The bathroom was clean. He ate his dinner, showered, and went to bed. As he passed the window, he noticed activity in the grounds near the fountains. There were lights coming out of the modern buildings. Three men, all dressed in white overalls, were driving toward the house in an open-top jeep. Two more men walked past. These were security guards, dressed in the same uniforms as the men at the gate. They were both carrying semiautomatic machine guns. Not just a private army but a well-armed one. He got into bed. The last person who had slept here had been his uncle, Ian Rider. Had he seen something, looking out of the window? Had he heard something? What could have happened that meant he had to die? Sleep took a long time coming to the dead man’s bed.'
+# tj = ''.join(e for e in tj if e.isalnum()).upper().replace("J", "I")
+# ngs = Ngram_score('playfair_english_quadgrams.txt')
+# matrixSize = 5
 
 
 tj = tj[:300]
-keyLength = 15
-startingPop = 3000
+keyLength = 36
+startingPop = 2000
 while True:
     key = ''
     while len(key) < keyLength:
