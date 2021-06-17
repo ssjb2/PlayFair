@@ -172,9 +172,11 @@ def attackEvo(kt):
     ws.cell(rows+1, 3, keyLength)
     ws.cell(rows+1, 4, len(tj))
     ws.cell(rows+1, 5, startingPop)
-    ws.cell(rows+1, 6, key)
+    ws.cell(rows+1, 6, ' '.join(key[i:i+matrixSize]
+            for i in range(0, len(key), matrixSize)))
     ws.cell(rows+1, 7, ngs.score(decoded))
-    ws.cell(rows+1, 8, matrixKeyToString(evaluatedPops[0][1])[0:keyLength])
+    ws.cell(rows+1, 8, ' '.join(matrixKeyToString(evaluatedPops[0][1])[
+            0:keyLength][j:j+matrixSize] for j in range(0, len(matrixKeyToString(evaluatedPops[0][1])[0:keyLength]), matrixSize)))
     ws.cell(rows+1, 9, bestScore)
 
     while True:
@@ -219,7 +221,6 @@ def evolutionStep(evaluatedPops, populationSize, step):
     for i in range(len(evaluatedPops)):
         evaluatedPops[i][2] += 1
         # inherit better and better
-    # if math.exp(better[0][2]/8)/20 < random.uniform(0, 1):
     if random.uniform(0, 1) > 0.1:
         for x in better:
             childs = childs + \
@@ -244,7 +245,7 @@ def evolutionStep(evaluatedPops, populationSize, step):
     # add childs and sort
     evaluatedPops = appendNewChild(evaluatedPops, childs)
     evaluatedPops = sortTable(evaluatedPops)
-    for i in range(10):
+    for i in range(5):
         evaluatedPops[i] = hillClimbing(evaluatedPops[i])
 
     numberOfLuckyLoosers = evaluatedPops[0][2]+1
@@ -262,7 +263,7 @@ def evolutionStep(evaluatedPops, populationSize, step):
 def inherit(arr1, arr2):
     # t = time.time()
     childs = []
-    for j in range(0, 75):
+    for j in range(0, 100):
         cP1 = copyRandomKey(arr1)
         cP2 = copyRandomKey(arr2)
         keyP1 = ""
@@ -309,13 +310,13 @@ def hillClimbing(key):
 
 def inheritrow(arr1):
     childs = []
-    for j in range(0, 200):
+    for j in range(0, 50):
         cP1 = copyRandomKey(arr1)
         cP2 = copyRandomKey(arr1)
         keyP1 = concatenateRowsInMatrix(cP1)
         keyP2 = concatenateRowsInMatrix(cP2)
         childs = childs + mutateKeyRows(keyP1, keyP2)
-        return childs
+    return childs
 
 
 def changecolumns(arr1):
@@ -352,21 +353,35 @@ def concatenateRowsInMatrix(cP1):
 
 def mutateKeyRows(key1, key2):
     childs = []
-    for x in range(0, keyLength//matrixSize-1):
-        keys = [key1[x]+key2[x],
-                key1[x]+key2[x+1],
-                key1[x][::-1]+key2[x][::-1],
-                key1[x][::-1]+key2[x+1][::-1],
-                key2[x]+key1[x],
-                key2[x]+key1[x+1],
-                key2[x][::-1]+key1[x][::-1],
-                key2[x][::-1]+key1[x+1][::-1]
-                ]
-        for x in keys:
-            childs = childs + [encodeKeyToMatrix(x)]
-        for x in range(0, 40):
-            for key in keys:
-                childs = childs + [encodeKeyToMatrix(swapLetters(key, 4))]
+    group1 = []
+    group2 = []
+    keys = []
+    for r in range(0, keyLength//matrixSize):
+        group1.append(key1[r])
+        group1.append(key1[r][::-1])
+        group2.append(key2[r])
+        group2.append(key2[r][::-1])
+    totalGroup = [group1, group2]
+    # for x in range(0, keyLength//matrixSize-1):
+    for x in range(0, 20):
+        tempKey = ''
+        for rows in range(1, 2):
+            k1, k2 = random.sample(range(
+                0, 2*(keyLength//matrixSize)-1), rows), random.sample(range(0, 2*(keyLength//matrixSize)-1), rows)
+            if rows == 1:
+                tempkey = group1[k1[0]] + group2[k2[0]]
+            else:
+                tempkey = group1[k1[0]] + group2[k2[0]] + \
+                    group1[k1[1]] + group2[k2[1]]
+            keys.append(tempKey)
+
+    for x in keys:
+        childs = childs + [encodeKeyToMatrix(x)]
+    for x in range(0, 5):
+        for key in keys:
+            childs = childs + \
+                [encodeKeyToMatrix(swapLetters("".join(dict.fromkeys(
+                    "".join(dict.fromkeys(key))+alfabet)), 4))]
     return childs
 
 
@@ -392,7 +407,7 @@ def swapLetters(text, number):
 
 def inherit2(arr1, arr2):
     childs = []
-    for j in range(0, 75):
+    for j in range(0, 100):
         cP1 = copyRandomKey(arr1)
         cP2 = copyRandomKey(arr2)
         keyP1 = cP1[1].reshape(1, len(alfabet))
@@ -401,24 +416,28 @@ def inherit2(arr1, arr2):
         keyP1 = ''.join(keyP1[0][0:keyLength])
         keyP2 = ''.join(keyP2[0][0:keyLength])
         key = np.full(keyLength, '0')
+        #print(keyP1, keyP2)
         # add letters from same place in keys
         for i in range(0, keyLength):
             if keyP1[i] == keyP2[i]:
                 key[i] = keyP1[i]  # ok
                 # print("trafiło")
-
         for j in range(0, keyLength):
             string = list(set(keyP1)-set("".join(key)))
-            if key[j] == '0':
-                key[j] = random.choice(string)
-        # print(key)
 
+            if key[j] == '0':
+                if random.uniform(0, 1) > 0.5:
+                    key[j] = keyP1[j]
+                else:
+                    key[j] = keyP2[j]
+        # print(key)
         # random fill rest of the key
         for j in range(0, keyLength):
             while key[j] == '0':
                 x = random.choice(alfabet)
                 if x not in key:
                     key[j] = x
+        # print("".join(key))
         childs.append(encodeKeyToMatrix("".join(key)))
 
     return childs
@@ -486,16 +505,16 @@ tj = ''.join(e for e in tj if e.isalnum()).upper()
 matrixSize = 6
 
 # english
-# alfabet = "ABCDEFGHIKLMNOPQRSTUVWXYZ"
-# tj = 'NOAMOUNTOFEVIDENCEWILLEVERPERSUADEANIDIOTWHENIWASSEVENTEENMYFATHERWASSOSTUPIDIDIDNTWANTTOBESEENWITHHIMINPUBLICWHENIWASTWENTYFOURIWASAMAZEDATHOWMUCHTHEOLDMANHADLEARNEDINJUSTSEVENYEARSWHYWASTEYOURMONEYLOOKINGUPYOURFAMILYTREEJUSTGOINTOPOLITICSANDYOUROPPONENTWILLDOITFORYOUIWASEDUCATEDONCEITTOOKMEYEARSTOGETOVERITNEVERARGUEWITHSTUPIDPEOPLETHEYWILLDRAGYOUDOWNTOTHEIRLEVELANDTHENBEATYOUWITHEXPERIENCEIFYOUDONTREADTHENEWSPAPERYOUREUNINFORMEDIFYOUREADTHENEWSPAPERYOUREMISINFORMEDHOWEASYITISTOMAKEPEOPLEBELIEVEALIEANDHOWHARDITISTOUNDOTHATWORKAGAINGOODDECISIONSCOMEFROMEXPERIENCEEXPERIENCECOMESFROMMAKINGBADDECISIONSIFYOUWANTTOCHANGETHEFUTUREYOUMUSTCHANGEWHATYOUREDOINGINTHEPRESENTDONTWRESTLEWITHPIGSYOUBOTHGETDIRTYANDTHEPIGLIKESITWORRYINGISLIKEPAYINGADEBTYOUDONTOWETHEAVERAGEWOMANWOULDRATHERHAVEBEAUTYTHANBRAINSBECAUSETHEAVERAGEMANCANSEEBETTERTHANHECANTHINKTHEMOREILEARNABOUTPEOPLETHEMOREILIKEMYDOG'
-# tj = 'He was led back along a passage, past more works of art, up a staircase, and then along a wide corridor with thick wood-paneled doors and chandeliers. Alex assumed that the main house was used for entertaining. Sayle himself must live here. But the computers would be constructed in the modern buildings he had seen opposite the airstrip. Presumably he would be taken there tomorrow. His room was at the far end. It was a large room with a four-poster bed and a window looking out onto the fountain. Darkness had fallen and the water, cascading ten feet into the air over a semi-naked statue that looked remarkably like Herod Sayle, was eerily illuminated by a dozen concealed lights. Next to the window was a table with an evening meal already laid out for him: ham, cheese, salad. His luggage was lying on the bed. He went over to his case—a Nike sports bag—and examined it. When he had closed it up, he had inserted three hairs into the zip, trapping them in the metal teeth. They were no longer there. Alex opened the case and went through it. Everything was exactly as it had been when he had packed, but he was certain that the sports bag had been expertly and methodically searched. He took out the Color Game Boy, inserted the Speed Wars cartridge, and pressed the start button. At once the screen lit up with a green rectangle, the same shape as the room. He lifted the Game Boy up and swung it around him, following the line of the walls. A red flashing dot suddenly appeared on the screen. He walked forward, holding the Game Boy in front of him. The dot flashed faster, more intensely. He had reached a picture, hanging next to the bathroom, a squiggle of colors that looked suspiciously like a Picasso. He put the Game Boy down, and being careful not to make a sound, lifted the canvas off the wall. The bug was taped behind it, a black disk about the size of a dime. Alex looked at it for a minute wondering why it was there. Security? Or was Sayle such a control freak that he had to know what his guests were doing, every minute of the day and night? Alex lifted the picture and gently lowered it back into place. There was only one bug in the room. The bathroom was clean. He ate his dinner, showered, and went to bed. As he passed the window, he noticed activity in the grounds near the fountains. There were lights coming out of the modern buildings. Three men, all dressed in white overalls, were driving toward the house in an open-top jeep. Two more men walked past. These were security guards, dressed in the same uniforms as the men at the gate. They were both carrying semiautomatic machine guns. Not just a private army but a well-armed one. He got into bed. The last person who had slept here had been his uncle, Ian Rider. Had he seen something, looking out of the window? Had he heard something? What could have happened that meant he had to die? Sleep took a long time coming to the dead man’s bed.'
-# tj = ''.join(e for e in tj if e.isalnum()).upper().replace("J", "I")
-# ngs = Ngram_score('playfair_english_quadgrams.txt')
-# matrixSize = 5
+alfabet = "ABCDEFGHIKLMNOPQRSTUVWXYZ"
+tj = 'NOAMOUNTOFEVIDENCEWILLEVERPERSUADEANIDIOTWHENIWASSEVENTEENMYFATHERWASSOSTUPIDIDIDNTWANTTOBESEENWITHHIMINPUBLICWHENIWASTWENTYFOURIWASAMAZEDATHOWMUCHTHEOLDMANHADLEARNEDINJUSTSEVENYEARSWHYWASTEYOURMONEYLOOKINGUPYOURFAMILYTREEJUSTGOINTOPOLITICSANDYOUROPPONENTWILLDOITFORYOUIWASEDUCATEDONCEITTOOKMEYEARSTOGETOVERITNEVERARGUEWITHSTUPIDPEOPLETHEYWILLDRAGYOUDOWNTOTHEIRLEVELANDTHENBEATYOUWITHEXPERIENCEIFYOUDONTREADTHENEWSPAPERYOUREUNINFORMEDIFYOUREADTHENEWSPAPERYOUREMISINFORMEDHOWEASYITISTOMAKEPEOPLEBELIEVEALIEANDHOWHARDITISTOUNDOTHATWORKAGAINGOODDECISIONSCOMEFROMEXPERIENCEEXPERIENCECOMESFROMMAKINGBADDECISIONSIFYOUWANTTOCHANGETHEFUTUREYOUMUSTCHANGEWHATYOUREDOINGINTHEPRESENTDONTWRESTLEWITHPIGSYOUBOTHGETDIRTYANDTHEPIGLIKESITWORRYINGISLIKEPAYINGADEBTYOUDONTOWETHEAVERAGEWOMANWOULDRATHERHAVEBEAUTYTHANBRAINSBECAUSETHEAVERAGEMANCANSEEBETTERTHANHECANTHINKTHEMOREILEARNABOUTPEOPLETHEMOREILIKEMYDOG'
+tj = 'He was led back along a passage, past more works of art, up a staircase, and then along a wide corridor with thick wood-paneled doors and chandeliers. Alex assumed that the main house was used for entertaining. Sayle himself must live here. But the computers would be constructed in the modern buildings he had seen opposite the airstrip. Presumably he would be taken there tomorrow. His room was at the far end. It was a large room with a four-poster bed and a window looking out onto the fountain. Darkness had fallen and the water, cascading ten feet into the air over a semi-naked statue that looked remarkably like Herod Sayle, was eerily illuminated by a dozen concealed lights. Next to the window was a table with an evening meal already laid out for him: ham, cheese, salad. His luggage was lying on the bed. He went over to his case—a Nike sports bag—and examined it. When he had closed it up, he had inserted three hairs into the zip, trapping them in the metal teeth. They were no longer there. Alex opened the case and went through it. Everything was exactly as it had been when he had packed, but he was certain that the sports bag had been expertly and methodically searched. He took out the Color Game Boy, inserted the Speed Wars cartridge, and pressed the start button. At once the screen lit up with a green rectangle, the same shape as the room. He lifted the Game Boy up and swung it around him, following the line of the walls. A red flashing dot suddenly appeared on the screen. He walked forward, holding the Game Boy in front of him. The dot flashed faster, more intensely. He had reached a picture, hanging next to the bathroom, a squiggle of colors that looked suspiciously like a Picasso. He put the Game Boy down, and being careful not to make a sound, lifted the canvas off the wall. The bug was taped behind it, a black disk about the size of a dime. Alex looked at it for a minute wondering why it was there. Security? Or was Sayle such a control freak that he had to know what his guests were doing, every minute of the day and night? Alex lifted the picture and gently lowered it back into place. There was only one bug in the room. The bathroom was clean. He ate his dinner, showered, and went to bed. As he passed the window, he noticed activity in the grounds near the fountains. There were lights coming out of the modern buildings. Three men, all dressed in white overalls, were driving toward the house in an open-top jeep. Two more men walked past. These were security guards, dressed in the same uniforms as the men at the gate. They were both carrying semiautomatic machine guns. Not just a private army but a well-armed one. He got into bed. The last person who had slept here had been his uncle, Ian Rider. Had he seen something, looking out of the window? Had he heard something? What could have happened that meant he had to die? Sleep took a long time coming to the dead man’s bed.'
+tj = ''.join(e for e in tj if e.isalnum()).upper().replace("J", "I")
+ngs = Ngram_score('playfair_english_quadgrams.txt')
+matrixSize = 5
 
 
 tj = tj[:300]
-keyLength = 36
+keyLength = 25
 startingPop = 2000
 while True:
     key = ''
