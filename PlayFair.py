@@ -534,9 +534,9 @@ startingPop = 2000
 
 
 def print_base_values():
-    print("Score of encrypted text: ", ngs.score(encoded))
-    print("Score of decrypted text: ", ngs.score(decoded))
-    print("Score per character: ", ngs.score(decoded) / len(decoded))
+    print("Score of encrypted text: ", round(ngs.score(encoded), 4))
+    print("Score of decrypted text: ", round(ngs.score(decoded), 4))
+    print("Score per character: ", round(ngs.score(decoded) / len(decoded), 2))
 
 
 def main_with_profile():
