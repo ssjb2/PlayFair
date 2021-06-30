@@ -7,6 +7,7 @@ import time
 import openpyxl as xl
 from functools import lru_cache 
 import multiprocessing as mp
+# import matplotlib.pyplot as plt
 
 np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
 
@@ -155,6 +156,7 @@ def attackEvo(kt):
     ws.cell(rows+1, 8, ' '.join(evaluatedPops[0][1][i:i+matrixSize]
             for i in range(0, len(evaluatedPops[0][1]), matrixSize)))
     ws.cell(rows+1, 9, bestScore)
+    ws.cell(rows+1, 10, time.strftime( "%d %b %Y %H:%M:%S", time.gmtime()))
 
     while True:
         try:
@@ -261,6 +263,22 @@ def evolutionStep(evaluatedPops, populationSize, step, workerPool, workerCount):
         # evaluatedPops[j] = hillClimbing(evaluatedPops[j], 20)
     evaluatedPops = sortTable(evaluatedPops)
     # return pops and remove worst keys
+
+
+    # x = []
+    # y = []
+    
+    # for i in evaluatedPops:
+    #     x.append(i[1])
+    #     y.append(i[0])
+
+    # plt.clf()
+    # plt.plot(x, y)
+    # plt.xticks([])
+    # plt.savefig('rawFrames/frame' + str(step) + '.png')
+    # plt.show()
+
+
     return evaluatedPops[0:populationSize]
 
 
@@ -491,7 +509,7 @@ def sortTable(array):
             del array[x+1-dele]
             dele += 1
     return array
-
+    
 
 def offspringKey(arr1):
     children = []
@@ -571,7 +589,7 @@ matrixSize = 6
 # matrixSize = 5
 tj = tj[:300]
 keyLength = 12
-startingPop = 4000
+startingPop = 6000
 # 6,2sekundy przy 8k populacji
 # 9 dekund przy 12k populacji
 # 27 sekund przy 24k populacji
