@@ -5,7 +5,7 @@ import random
 import math
 import time
 import openpyxl as xl
-from functools import lru_cache
+from functools import lru_cache 
 import multiprocessing as mp
 
 np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
@@ -104,6 +104,7 @@ def attackEvo(kt):
 
     # multiprocessing worker pool
     workerCount = mp.cpu_count()
+    # workerCount = 1
     pool = mp.Pool(workerCount)
     # We leave 1 core free just in case to not block whole machine
 
@@ -175,7 +176,7 @@ def evolutionStep(evaluatedPops, populationSize, step, workerPool, workerCount):
     # age of to old pops
     ageOfPop = 15
     # new keys to add
-    childs = []
+    children = []
     # best keys % of all pops
     if evaluatedPops[0][2] >= 25 and evaluatedPops[0][2] % 25 == 0:
         print("RESET ################")
@@ -202,21 +203,21 @@ def evolutionStep(evaluatedPops, populationSize, step, workerPool, workerCount):
         evaluatedPops[i][2] += 1
 
     # inherit better and better
-    for i in range(math.floor(populationSize*OFFSPRING_PERCENT/2)):
-        childs.append(offspringKey(better))
-        childs.append(offspringKey(worse))
-    for i in range(math.floor(populationSize*INHERIT_PERCENT/2)):
-        childs.append(inherit(better, better))
-        childs.append(inherit(better, worse))
-    for i in range(math.floor(populationSize*INHERIT2_PERCENT/2)):
-        childs.append(inherit2(better, better))
-        childs.append(inherit2(better, worse))
-    for i in range(math.floor(populationSize*OFFSPRING2_PERCENT/2)):
-        childs.append(offspringKey2(better))
-        childs.append(offspringKey2(worse))
-    for i in range(math.floor(populationSize*INHERIT_ROW_PERCENT/2)):
-        childs = childs + inheritrow(better)
-        childs = childs + inheritrow(worse)
+    kindergarden = []
+    kindergarden.append([workerPool.apply_async(offspringKey, args=[better])])
+    kindergarden.append([workerPool.apply_async(offspringKey, args=[worse])])
+    kindergarden.append([workerPool.apply_async(offspringKey2, args=[better])])
+    kindergarden.append([workerPool.apply_async(offspringKey2, args=[worse])])
+    kindergarden.append([workerPool.apply_async(inherit, args=(better, better))])
+    kindergarden.append([workerPool.apply_async(inherit, args=(better, worse))])
+    kindergarden.append([workerPool.apply_async(inherit2, args=(better, better))])
+    kindergarden.append([workerPool.apply_async(inherit2, args=(better, worse))])
+    kindergarden.append([workerPool.apply_async(inheritrow, args=[better])])
+    kindergarden.append([workerPool.apply_async(inheritrow, args=[worse])])
+    # for r in kindergarden:
+    #     print(r[0].get())
+    kindergardenGroups = [r[0].get() for r in kindergarden]
+    children = [item for sublist in kindergardenGroups for item in sublist]
 
     # add new random keys
     numberOfFreshBlood = math.floor(
@@ -224,31 +225,24 @@ def evolutionStep(evaluatedPops, populationSize, step, workerPool, workerCount):
     numberOfFreshBlood = min(numberOfFreshBlood, math.floor(
         populationSize*MAX_FRESH_BLOOD_PERCENT))
     for i in range(numberOfFreshBlood):
-        childs.append(newKey(keyLength))
-    childs = list(set(childs))
-    print("Total population:", len(evaluatedPops)+len(childs),
-          ", new children:", len(childs), ", deleted old: ", deleted)
+        children.append(newKey(keyLength))
+    children = list(set(children))
+    print("Total population:", len(evaluatedPops)+len(children),
+          ", new children:", len(children), ", deleted old: ", deleted)
 
-    # add childs and sort
+    # add children and sort
     # most likely dangerous, probably will blow
     workPart = [[] for _ in range(workerCount)]
-    for i in range(len(childs)):
-        workPart[i % workerCount].append(childs[i])
+    for i in range(len(children)):
+        workPart[i % workerCount].append(children[i])
 
     processedResults = [workerPool.apply_async(
         processNewPops, args=(dataPack, encoded)) for dataPack in workPart]
     processedPopsPack = [r.get() for r in processedResults]
     processedPops = [item for sublist in processedPopsPack for item in sublist]
     evaluatedPops = evaluatedPops + processedPops
-    # !!! ważne, dodać za chwilę
-    # evaluatedPops = appendNewChild(evaluatedPops, childs)
-    # def appendNewChild(pops, childs):
-    #     for x in childs:
-    #         # print(x)
-    #         pops.append(addNewToPopulation(x))
-    #     return pops
 
-    evaluatedPops = sortTable(evaluatedPops)
+    # evaluatedPops = sortTable(evaluatedPops)
 
     # hillclimbing
     for i in range(10):
@@ -266,36 +260,41 @@ def evolutionStep(evaluatedPops, populationSize, step, workerPool, workerCount):
 
 
 def inherit(arr1, arr2):
-    key = list(copyRandomKey(arr1)[
-        1][0:keyLength] + copyRandomKey(arr2)[1][0:keyLength])
-    random.shuffle(key)
-    return joinAlfabetToKey("".join(key[0:keyLength]))
+    children = []
+    for i in range(math.floor(startingPop*INHERIT_PERCENT/2)):
+        key = list(copyRandomKey(arr1)[
+            1][0:keyLength] + copyRandomKey(arr2)[1][0:keyLength])
+        random.shuffle(key)
+        children.append(joinAlfabetToKey("".join(key[0:keyLength])))
+    return children
 
 
 def inherit2(arr1, arr2):
-    keyP1 = ''.join(copyRandomKey(arr1)[1][0:keyLength])
-    keyP2 = ''.join(copyRandomKey(arr2)[1][0:keyLength])
-    key = np.full(keyLength, '0')
-    # add letters from same place in keys
-    for i in range(0, keyLength):
-        if keyP1[i] == keyP2[i]:
-            key[i] = keyP1[i]  # ok
-            # print("trafiło")
+    children = []
+    for i in range(math.floor(startingPop*INHERIT2_PERCENT/2)):
+        keyP1 = ''.join(copyRandomKey(arr1)[1][0:keyLength])
+        keyP2 = ''.join(copyRandomKey(arr2)[1][0:keyLength])
+        key = np.full(keyLength, '0')
+        # add letters from same place in keys
+        for i in range(0, keyLength):
+            if keyP1[i] == keyP2[i]:
+                key[i] = keyP1[i]  # ok
+                # print("trafiło")
 
-    for j in range(0, keyLength):
-        string = list(set(keyP1)-set("".join(key)))
-        if key[j] == '0':
-            key[j] = random.choice(string)
-    # print(key)
+        for j in range(0, keyLength):
+            string = list(set(keyP1)-set("".join(key)))
+            if key[j] == '0':
+                key[j] = random.choice(string)
+        # print(key)
 
-    # random fill rest of the key
-    for j in range(0, keyLength):
-        while key[j] == '0':
-            x = random.choice(alfabet)
-            if x not in key:
-                key[j] = x
-    return joinAlfabetToKey("".join(key))
-
+        # random fill rest of the key
+        for j in range(0, keyLength):
+            while key[j] == '0':
+                x = random.choice(alfabet)
+                if x not in key:
+                    key[j] = x
+        children.append(joinAlfabetToKey("".join(key)))
+    return children
 
 def hillClimbing1(key):
     j = 0
@@ -370,13 +369,14 @@ def reverseRow(key):
 
 
 def inheritrow(arr1):
-    childs = []
-    cP1 = copyRandomKey(arr1)[1]
-    cP2 = copyRandomKey(arr1)[1]
-    keyP1 = divideKeyByRows(cP1)
-    keyP2 = divideKeyByRows(cP2)
-    childs = childs + mutateKeyRows(keyP1, keyP2)
-    return childs
+    children = []
+    for i in range(math.floor(startingPop*INHERIT_ROW_PERCENT/2)):
+        cP1 = copyRandomKey(arr1)[1]
+        cP2 = copyRandomKey(arr1)[1]
+        keyP1 = divideKeyByRows(cP1)
+        keyP2 = divideKeyByRows(cP2)
+        children = children + mutateKeyRows(keyP1, keyP2)
+    return children
 
 
 def copyRandomKey(arr1):
@@ -454,27 +454,32 @@ def sortTable(array):
     array.sort(key=lambda x: (x[0], x[2]), reverse=True)
     dele = 0
     for x in range(0, len(array)-2):
-        if round(array[x-dele][0], 2) == round(array[x+1-dele][0], 2):
+        if array[x-dele][0] == array[x+1-dele][0]:
             del array[x+1-dele]
             dele += 1
     return array
 
 
 def offspringKey(arr1):
-    keyString = copyRandomKey(arr1)[1]
-    keyString = ''.join(keyString[0:keyLength])
-    newLetter = random.choice(alfabet)
-    while keyString.find(newLetter) > 0:
+    children = []
+    for i in range(math.floor(startingPop*OFFSPRING_PERCENT/2)):
+        keyString = copyRandomKey(arr1)[1]
+        keyString = ''.join(keyString[0:keyLength])
         newLetter = random.choice(alfabet)
-    newLetterIndex = random.randint(0, keyLength)
-    keyFront, keyBack = keyString[:newLetterIndex], keyString[newLetterIndex:]
-    return joinAlfabetToKey(keyFront + newLetter + keyBack)
-
+        while keyString.find(newLetter) > 0:
+            newLetter = random.choice(alfabet)
+        newLetterIndex = random.randint(0, keyLength)
+        keyFront, keyBack = keyString[:newLetterIndex], keyString[newLetterIndex:]
+        children.append(joinAlfabetToKey(keyFront + newLetter + keyBack))
+    return children
 
 def offspringKey2(arr1):
-    keyString = copyRandomKey(arr1)[1]
-    keyString = ''.join(keyString[0:keyLength])
-    return joinAlfabetToKey(transpose(keyString))
+    children = []
+    for i in range(math.floor(startingPop*OFFSPRING2_PERCENT/2)):
+        keyString = copyRandomKey(arr1)[1]
+        keyString = ''.join(keyString[0:keyLength])
+        children.append(joinAlfabetToKey(transpose(keyString)))
+    return children
 
 
 # multithreding support
@@ -531,7 +536,7 @@ matrixSize = 6
 # ngs = Ngram_score('playfair_english_quadgrams.txt')
 # matrixSize = 5
 tj = tj[:300]
-keyLength = 18
+keyLength = 12
 startingPop = 8000
 # 6,2sekundy przy 8k populacji
 # 9 dekund przy 12k populacji
